@@ -10,19 +10,9 @@ It's the assistant I always wanted: not a chat window in a separate app that I h
 
 ## Demo
 
-<!--
-  HOW TO ADD THE VIDEO (gives a real inline player):
-  1. Open this README on GitHub and click the ✏️ (Edit) pencil.
-  2. Drag your video file (.mp4 / .mov / .webm) into the editor on the blank
-     line below this comment. GitHub uploads it and auto-inserts a URL like:
-        https://github.com/user-attachments/assets/xxxxxxxx-xxxx-...
-  3. Leave that URL on its own line, then commit. It renders as a player.
+▶️ **Watch the walkthrough:** 
 
-  (Tip: if it's a long/high-res video, GitHub may reject very large files —
-   trim it or compress to keep it reasonable.)
--->
-
-▶️ **Watch the walkthrough:** _video coming here_ &nbsp;—&nbsp; drag your clip into this section on GitHub (see the note in the source).
+https://github.com/user-attachments/assets/94304ff5-ddf2-4a03-a595-af43da8ebf81
 
 ---
 
