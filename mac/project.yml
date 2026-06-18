@@ -1,0 +1,94 @@
+name: Pointer
+packages:
+  ExtendedSwiftMath:
+    url: https://github.com/ChrisGVE/ExtendedSwiftMath.git
+    from: 1.0.0
+options:
+  bundleIdPrefix: app.pointer
+  deploymentTarget:
+    macOS: "14.0"
+  createIntermediateGroups: true
+  groupSortPosition: top
+
+settings:
+  base:
+    SWIFT_VERSION: "6.0"
+    SWIFT_STRICT_CONCURRENCY: complete
+    # Stable signing identity so macOS TCC keeps permission grants across
+    # rebuilds. Without a real team the build is ad-hoc signed and every
+    # build looks like a new app, forcing the user to re-grant each time.
+    DEVELOPMENT_TEAM: V7G479S2SK
+    CODE_SIGN_STYLE: Automatic
+    CODE_SIGN_IDENTITY: "Apple Development"
+    ENABLE_HARDENED_RUNTIME: YES
+    ENABLE_USER_SCRIPT_SANDBOXING: NO
+    MACOSX_DEPLOYMENT_TARGET: "14.0"
+    GENERATE_INFOPLIST_FILE: NO
+    PRODUCT_BUNDLE_IDENTIFIER: app.pointer.Pointer
+    INFOPLIST_FILE: Sources/Pointer/Resources/Info.plist
+    CODE_SIGN_ENTITLEMENTS: Sources/Pointer/Resources/Pointer.entitlements
+    LD_RUNPATH_SEARCH_PATHS: ["$(inherited)", "@executable_path/../Frameworks"]
+    OTHER_SWIFT_FLAGS: "-warnings-as-errors"
+
+targets:
+  Pointer:
+    type: application
+    platform: macOS
+    sources:
+      - path: Sources/Pointer
+        excludes:
+          - "Resources/Info.plist"
+          - "Resources/Pointer.entitlements"
+    info:
+      path: Sources/Pointer/Resources/Info.plist
+      properties:
+        CFBundleDisplayName: Pointer
+        NSLocationWhenInUseUsageDescription: Pointer uses your location for nearby place searches.
+        NSMicrophoneUsageDescription: Pointer uses the microphone for point-and-speak questions.
+        NSSpeechRecognitionUsageDescription: Pointer converts your speech to text for hands-free questions.
+    settings:
+      base:
+        # Merged into the processed Info.plist even when using a custom file.
+        INFOPLIST_KEY_CFBundleDisplayName: Pointer
+        INFOPLIST_KEY_NSMicrophoneUsageDescription: Pointer uses the microphone for point-and-speak questions.
+        INFOPLIST_KEY_NSSpeechRecognitionUsageDescription: Pointer converts your speech to text for hands-free questions.
+        INFOPLIST_KEY_NSLocationWhenInUseUsageDescription: Pointer uses your location for nearby place searches.
+    entitlements:
+      path: Sources/Pointer/Resources/Pointer.entitlements
+    dependencies:
+      - package: ExtendedSwiftMath
+        product: SwiftMath
+    postBuildScripts:
+      - name: Strip xattrs before CodeSign
+        path: Scripts/strip-xattrs.sh
+        basedOnDependencyAnalysis: false
+
+  PointerTests:
+    type: bundle.unit-test
+    platform: macOS
+    sources:
+      - path: Tests/PointerTests
+    dependencies:
+      - target: Pointer
+    settings:
+      base:
+        BUNDLE_LOADER: "$(TEST_HOST)"
+        TEST_HOST: "$(BUILT_PRODUCTS_DIR)/Pointer.app/Contents/MacOS/Pointer"
+
+schemes:
+  Pointer:
+    build:
+      targets:
+        Pointer: all
+    run:
+      config: Debug
+    test:
+      config: Debug
+      targets:
+        - PointerTests
+    profile:
+      config: Release
+    analyze:
+      config: Debug
+    archive:
+      config: Release

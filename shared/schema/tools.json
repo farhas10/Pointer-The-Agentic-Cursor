@@ -1,0 +1,322 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://pointer.app/schema/tools.json",
+  "title": "Pointer tool schema",
+  "description": "JSON Schema describing every tool the LLM can invoke. Shared by the mac client (action executor) and the backend (LLM tool registration + safety validator).",
+  "type": "object",
+  "required": ["version", "tools"],
+  "properties": {
+    "version": { "type": "string", "const": "1" },
+    "tools": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/Tool" }
+    }
+  },
+  "$defs": {
+    "Tool": {
+      "type": "object",
+      "required": ["name", "tier", "description", "input_schema"],
+      "properties": {
+        "name": { "type": "string", "pattern": "^[a-z][a-z0-9_]*$" },
+        "tier": {
+          "type": "string",
+          "enum": ["safe", "automation", "destructive"],
+          "description": "Tier governs the confirmation UX and the safety validator. 'safe' tools auto-execute, 'automation' and 'destructive' tools show a 5s countdown (Enter confirms early, Esc cancels)."
+        },
+        "description": { "type": "string" },
+        "input_schema": { "type": "object" },
+        "available_in_phase": { "type": "integer", "minimum": 1 }
+      }
+    }
+  },
+  "tools_data": {
+    "version": "1",
+    "tools": [
+      {
+        "name": "copy_to_clipboard",
+        "tier": "safe",
+        "available_in_phase": 3,
+        "description": "Copy a string to the system clipboard.",
+        "input_schema": {
+          "type": "object",
+          "required": ["text"],
+          "properties": { "text": { "type": "string" } }
+        }
+      },
+      {
+        "name": "search_web",
+        "tier": "safe",
+        "available_in_phase": 4,
+        "description": "Search the web for current information, reviews, prices, news, and facts beyond what is visible on screen. Use when the user asks for more details, reviews, comparisons, or research about something they are looking at.",
+        "input_schema": {
+          "type": "object",
+          "required": ["query"],
+          "properties": {
+            "query": {
+              "type": "string",
+              "description": "Specific search query, e.g. 'Ballston Local Arlington VA restaurant reviews'"
+            }
+          }
+        }
+      },
+      {
+        "name": "search_places",
+        "tier": "safe",
+        "available_in_phase": 4,
+        "description": "Search for nearby places (restaurants, shops, services) using the user's location when available.",
+        "input_schema": {
+          "type": "object",
+          "required": ["query"],
+          "properties": {
+            "query": { "type": "string", "description": "e.g. 'Italian restaurants open now'" }
+          }
+        }
+      },
+      {
+        "name": "open_url",
+        "tier": "safe",
+        "available_in_phase": 3,
+        "description": "Open a URL in the browser. Use new_tab:true to open in a new tab while keeping Pointer available.",
+        "input_schema": {
+          "type": "object",
+          "required": ["url"],
+          "properties": {
+            "url": { "type": "string", "format": "uri" },
+            "new_tab": { "type": "boolean", "default": false },
+            "browser": { "type": "string", "enum": ["default", "safari", "arc"] }
+          }
+        }
+      },
+      {
+        "name": "find_ax_element",
+        "tier": "safe",
+        "available_in_phase": 4,
+        "description": "Find UI elements in the focused window by role or title/label. Returns paths for ax_press.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "role": { "type": "string" },
+            "title": { "type": "string" },
+            "label": { "type": "string" }
+          }
+        }
+      },
+      {
+        "name": "ax_press",
+        "tier": "automation",
+        "available_in_phase": 4,
+        "description": "Press a button, link, or menu item via Accessibility API using a path from find_ax_element.",
+        "input_schema": {
+          "type": "object",
+          "required": ["path"],
+          "properties": {
+            "path": { "type": "string" },
+            "action": { "type": "string", "default": "AXPress" }
+          }
+        }
+      },
+      {
+        "name": "ax_set_value",
+        "tier": "automation",
+        "available_in_phase": 4,
+        "description": "Set text on an accessibility element by path.",
+        "input_schema": {
+          "type": "object",
+          "required": ["path", "value"],
+          "properties": {
+            "path": { "type": "string" },
+            "value": { "type": "string" }
+          }
+        }
+      },
+      {
+        "name": "ax_focus",
+        "tier": "automation",
+        "available_in_phase": 4,
+        "description": "Move keyboard focus to an accessibility element by path.",
+        "input_schema": {
+          "type": "object",
+          "required": ["path"],
+          "properties": { "path": { "type": "string" } }
+        }
+      },
+      {
+        "name": "invoke_menu",
+        "tier": "automation",
+        "available_in_phase": 4,
+        "description": "Invoke a menu bar item by title path, e.g. [\"Format\", \"Font\", \"Bold\"].",
+        "input_schema": {
+          "type": "object",
+          "required": ["path"],
+          "properties": {
+            "path": {
+              "type": "array",
+              "items": { "type": "string" }
+            }
+          }
+        }
+      },
+      {
+        "name": "media_control",
+        "tier": "safe",
+        "available_in_phase": 4,
+        "description": "Control system media playback: play, pause, next, previous.",
+        "input_schema": {
+          "type": "object",
+          "required": ["action"],
+          "properties": {
+            "action": {
+              "type": "string",
+              "enum": ["play", "pause", "play_pause", "next", "previous"]
+            }
+          }
+        }
+      },
+      {
+        "name": "run_shortcut",
+        "tier": "automation",
+        "available_in_phase": 4,
+        "description": "Run a macOS Shortcuts automation by name.",
+        "input_schema": {
+          "type": "object",
+          "required": ["name"],
+          "properties": {
+            "name": { "type": "string" },
+            "input": { "type": "string" }
+          }
+        }
+      },
+      {
+        "name": "paste_text",
+        "tier": "automation",
+        "available_in_phase": 3,
+        "description": "Paste a string into the currently focused text field. Prefers AXValueAttribute; falls back to a synthetic Cmd+V.",
+        "input_schema": {
+          "type": "object",
+          "required": ["text"],
+          "properties": { "text": { "type": "string" } }
+        }
+      },
+      {
+        "name": "replace_selection",
+        "tier": "automation",
+        "available_in_phase": 3,
+        "description": "Replace the current selection in the focused field with the provided text.",
+        "input_schema": {
+          "type": "object",
+          "required": ["text"],
+          "properties": { "text": { "type": "string" } }
+        }
+      },
+      {
+        "name": "click_at",
+        "tier": "automation",
+        "available_in_phase": 4,
+        "description": "Synthesize a left-click at a screen point in global coordinates.",
+        "input_schema": {
+          "type": "object",
+          "required": ["x", "y"],
+          "properties": {
+            "x": { "type": "number" },
+            "y": { "type": "number" },
+            "double": { "type": "boolean", "default": false }
+          }
+        }
+      },
+      {
+        "name": "type_text",
+        "tier": "automation",
+        "available_in_phase": 4,
+        "description": "Type a string at the current keyboard focus.",
+        "input_schema": {
+          "type": "object",
+          "required": ["text"],
+          "properties": { "text": { "type": "string" } }
+        }
+      },
+      {
+        "name": "key_chord",
+        "tier": "automation",
+        "available_in_phase": 4,
+        "description": "Synthesize a key chord such as cmd+s or ctrl+shift+t.",
+        "input_schema": {
+          "type": "object",
+          "required": ["chord"],
+          "properties": { "chord": { "type": "string" } }
+        }
+      },
+      {
+        "name": "launch_app",
+        "tier": "safe",
+        "available_in_phase": 4,
+        "description": "Launch an application by name or bundle ID. Use this when the user says 'open Safari', 'launch Finder', etc. Works even if the app is not already running.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "name": { "type": "string", "description": "App name, e.g. Safari, Finder, Chrome" },
+            "bundle_id": { "type": "string", "description": "Bundle ID, e.g. com.apple.Safari" }
+          }
+        }
+      },
+      {
+        "name": "focus_app",
+        "tier": "automation",
+        "available_in_phase": 4,
+        "description": "Bring a running app to the foreground by bundle identifier. Prefer launch_app if the app may not be running.",
+        "input_schema": {
+          "type": "object",
+          "required": ["bundle_id"],
+          "properties": { "bundle_id": { "type": "string" } }
+        }
+      },
+      {
+        "name": "open_path",
+        "tier": "automation",
+        "available_in_phase": 4,
+        "description": "Open a file or folder path in its default application (files) or Finder (directories). Tilde paths like ~/Documents work.",
+        "input_schema": {
+          "type": "object",
+          "required": ["path"],
+          "properties": { "path": { "type": "string" } }
+        }
+      },
+      {
+        "name": "list_directory",
+        "tier": "safe",
+        "available_in_phase": 4,
+        "description": "List files and folders at a path. Returns names and whether each entry is a directory.",
+        "input_schema": {
+          "type": "object",
+          "required": ["path"],
+          "properties": {
+            "path": { "type": "string" },
+            "max_entries": { "type": "integer", "default": 40 }
+          }
+        }
+      },
+      {
+        "name": "run_applescript",
+        "tier": "destructive",
+        "available_in_phase": 4,
+        "description": "Run an AppleScript snippet. Used for app-specific actions where AX is insufficient.",
+        "input_schema": {
+          "type": "object",
+          "required": ["script"],
+          "properties": { "script": { "type": "string" } }
+        }
+      },
+      {
+        "name": "read_ax_tree",
+        "tier": "safe",
+        "available_in_phase": 4,
+        "description": "Read the accessibility tree of the focused window for grounding subsequent actions.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "max_depth": { "type": "integer", "default": 6 }
+          }
+        }
+      }
+    ]
+  }
+}

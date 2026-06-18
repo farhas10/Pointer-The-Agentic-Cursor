@@ -1,0 +1,39 @@
+## macOS / Xcode / Swift
+.DS_Store
+.build/
+DerivedData/
+*.xcodeproj/
+!mac/project.yml
+*.xcworkspace
+xcuserdata/
+*.xcuserstate
+*.swp
+Package.resolved
+
+## Node / Backend
+node_modules/
+dist/
+*.log
+.env
+.env.local
+.env.*.local
+.pnpm-store/
+coverage/
+
+## IDE
+.idea/
+.vscode/
+!.vscode/settings.json
+!.vscode/extensions.json
+
+## Local app data (when running from Xcode)
+~/Library/Application Support/Pointer/
+*.sqlite
+*.sqlite-journal
+*.sqlite-wal
+*.sqlite-shm
+
+## Misc
+*.bak
+*.orig
+.cache/

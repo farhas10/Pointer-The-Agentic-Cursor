@@ -1,0 +1,53 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  backend:
+    name: Backend (typecheck + tests)
+    runs-on: ubuntu-24.04
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+      - run: npm ci
+      - run: npx tsc
+      - run: npx vitest run
+
+  mac:
+    name: macOS app (build + tests)
+    runs-on: macos-14
+    defaults:
+      run:
+        working-directory: mac
+    steps:
+      - uses: actions/checkout@v4
+      # `swift build`/`swift test` are the primary gate: full Swift 6
+      # strict-concurrency checking without depending on Xcode IDE plugins.
+      - name: Build (SwiftPM, Swift 6 strict concurrency)
+        run: swift build
+      - name: Test (SwiftPM)
+        run: swift test
+      # Also verify the shipping app target generates + builds in Xcode.
+      - name: Install xcodegen
+        run: brew install xcodegen
+      - name: Generate Xcode project
+        run: xcodegen generate
+      - name: Build app target (Debug, macOS)
+        run: |
+          xcodebuild \
+            -project Pointer.xcodeproj \
+            -scheme Pointer \
+            -configuration Debug \
+            -destination 'platform=macOS' \
+            CODE_SIGNING_ALLOWED=NO \
+            build
